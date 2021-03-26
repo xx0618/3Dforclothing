@@ -1,12 +1,8 @@
 var SHOWD = (function () {
-	var clickTimeId //延时器，解决单双击冲突
 	var canvasId  //  canvas id
 	var canvas // 画布
-	var modelInfo  //  默认模型JSON文件
-	var positionInfo  //  辅料位置信息
 	var scene
 	var controls
-	var dragControls
 	var transformControls
 	var clickTimes = 0
 	var camera
@@ -21,7 +17,6 @@ var SHOWD = (function () {
 	var humanmodel = new THREE.Group() // 人模组
 	var scalebase = 0.3  //  缩放
 	var ydown = -2.49  //  模型高度调节
-	var cha = 11.67  //  辅料高度调节
 	var newMaterial  //  选中模型的材料
 	var newUuid // 选中模型的uuid
 	var newName  //  选中模型的名称
@@ -34,9 +29,6 @@ var SHOWD = (function () {
 	var dblCallback // 双击回调
 	var markCallback // 标注回调
 	var updateMatCallback // 更换材料回调
-	var callbackFabric = []  //  更换面料返回的数据
-	var callbackAccessories = []  //  更换辅料返回的数据
-	var callbackModel = []  //  更换部件返回的数据
 	// var callbackLabel = []
 	var modelSave = []  //  模型内容保存数组
 	var fabricSave = []  //  面料保存数组
@@ -46,8 +38,6 @@ var SHOWD = (function () {
 	var input_con  //  标注用临时变量
 	var labeldiv // 标注用变量
 	var labelarr = []  //  标注用临时数组
-	var labelId  //  标注所在的模型名称
-	var labelContent  //  标注的内容
 	var labelSave = []  //  标注的全部信息
 	
 	function init3dComponent() { // load scene
@@ -197,7 +187,7 @@ var SHOWD = (function () {
 		const loader = new THREE.GLTFLoader();
 		loader.load(path, function (gltf) {
 			theModel = gltf.scene
-
+console.log(fab)
 			theModel.traverse(o => {
 				if (o.isMesh) {
 					o.partId = id
@@ -212,10 +202,10 @@ var SHOWD = (function () {
 			modelg.add(theModel)
 		},
 		function (xhr) {
-			// console.log((xhr.loaded / xhr.total * 100 ) + '% loaded')
+			console.log((xhr.loaded / xhr.total * 100 ) + '% loaded')
 		},
 		function loaderror(error) {
-			alert('出现加载错误，请刷新界面！')
+			alert(error, '出现加载错误，请刷新界面！')
 		})
 	}
 	function loadAccessories(path, accnum, scale, classify, partId, isZipper, headId, headColor, specification, accMaterial, perPrice) {
@@ -374,7 +364,8 @@ var SHOWD = (function () {
 					isTablet: isTablet,
 					isPhone: isPhone,
 					isAndroid: isAndroid,
-					isPc: isPc
+                    isPc: isPc,
+                    isChrome: isChrome
 				};
 			}()
 
@@ -415,7 +406,7 @@ var SHOWD = (function () {
 	        //  触发双击事件...
 			ondblclicks(event)
 	      }
-	      let timer = setTimeout(function() {
+	      setTimeout(function() {
 	        if (clickTimes === 1) {
 	          clickTimes = 0; // 单击清零
 	          //  触发单击事件...
@@ -880,22 +871,22 @@ var SHOWD = (function () {
 	}
 	function accPlacement(target) {
 		let congui = new function() {
-			this.PX = target.position.x
-			this.PY = target.position.y
-			this.PZ = target.position.z
-			this.RX = target.rotation.x
-			this.RY = target.rotation.y
-			this.RZ = target.rotation.z
+			PX = target.position.x
+			PY = target.position.y
+			PZ = target.position.z
+			RX = target.rotation.x
+			RY = target.rotation.y
+			RZ = target.rotation.z
 		}
 		const placeAcc = new THREE.TransformControls(camera, renderer.domElement)
 		scene.add(placeAcc)
 		placeAcc.setSize(0.2)
 		placeAcc.attach(target)
 		
-		placeAcc.addEventListener('mouseDown', function(evt) {
+		placeAcc.addEventListener('mouseDown', function() {
 			controls.enabled = false
 		})
-		placeAcc.addEventListener('mouseUp', function(evt) {
+		placeAcc.addEventListener('mouseUp', function() {
 			controls.enabled = true
 		})
 		
@@ -975,7 +966,7 @@ var SHOWD = (function () {
 			scene.add(modelg)
 		})
 	}
-	function initZipper(canvasId, path, id, headId, color) {
+	function initZipper(canvasId, zipperData) {
 		const BACKGROUND_COLOR = 0xF9FAFC   // background color
 		scene = new THREE.Scene()  // 3d scene
 		scene.background = new THREE.Color(BACKGROUND_COLOR)  //  set background
@@ -1190,8 +1181,6 @@ var SHOWD = (function () {
 		lightMesh.name = 'dirlight';
 		lightGroup.add(lightMesh);
 
-		let lightPosition
-		// lightPosition = lightMesh.position
 		const spotLight = new THREE.SpotLight(0xffffff, 1);  // add light
 		spotLight.position.set(lightMesh.position.x, lightMesh.position.y, lightMesh.position.z);
 		spotLight.material = lightMaterial
@@ -1207,9 +1196,9 @@ var SHOWD = (function () {
 		scene.add(lightGroup)
 		
 		let congui = new function() {
-			this.color = spotLight.color.getHex()
-			this.intensity = spotLight.intensity
-			this.helper = false
+			color = spotLight.color.getHex()
+			intensity = spotLight.intensity
+			helper = false
 		}
 		let datgui = new dat.GUI()
 		datgui.addColor(congui, 'color').name('光线颜色').onChange(function(val) {
@@ -1230,11 +1219,11 @@ var SHOWD = (function () {
 		scene.add(transformControls)
 		transformControls.setSize(0.2)
 		transformControls.attach(lightMesh)
-		transformControls.addEventListener('mouseDown', function(evt) {
+		transformControls.addEventListener('mouseDown', function() {
 			controls.enabled = false
 			spotLight.position.set(lightMesh.position.x, lightMesh.position.y, lightMesh.position.z);
 		})
-		transformControls.addEventListener('mouseUp', function(evt) {
+		transformControls.addEventListener('mouseUp', function() {
 			controls.enabled = true
 			spotLight.position.set(lightMesh.position.x, lightMesh.position.y, lightMesh.position.z);
 		})
@@ -1271,7 +1260,10 @@ var SHOWD = (function () {
 					
 					// let rotationnow = new THREE.Vector3()
 					let rotationnow = []
-										const rotQ = new THREE.Quaternion()					const rotE = new THREE.Euler()					o.getWorldQuaternion(rotQ)
+					
+					const rotQ = new THREE.Quaternion()
+					const rotE = new THREE.Euler()
+					o.getWorldQuaternion(rotQ)
 					rotE.setFromQuaternion(rotQ)
 					rotationnow = rotE
 					
