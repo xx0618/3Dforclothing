@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="cn" class="no-js">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>3D更换拉链拉头</title>
+    <meta name="author" content="Seemsay.com by Evgeny" />
+	<link rel="stylesheet" type="text/css" href="css/fbj.css" />
+	<script src="jsx/three.min.js" ></script>
+	<script src="jsx/GLTFLoader.js" ></script>
+	<script src="jsx/OrbitControls.js" ></script>
+	<script src="jsx/stats.min.js" ></script>
+	<script src="jsx/3D.js"></script>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+	<div class="frame">
+		<h1 class="frame__title" id="productname"></h1>
+		<form class="exports">
+		<input type="button" id="savejm" value="保存"></input>
+		<input type="button" id="style" value="换拉头"></input>
+		<input type="button" id="color" value="换拉头颜色"></input>
+		</form>
+	</div>
+	<script>
+		
+		const idCanvas = "c"
+		var zipperData = [{
+			zipperPath: "./assets/lalian7.glb",
+			zipperId: 26,
+			headPath: "./assets/head7.glb",
+			headId: 2,
+			headColor: "#af2348"
+		}]
+		
+		SHOWD.initZipper(idCanvas, zipperData)
+		
+		const btsave = document.getElementById('savejm')  //  获取保存按钮
+		btsave.addEventListener('click', SHOWD.getChangeZipper)  //  监听保存按钮
+
+		const btmod = document.getElementById('style')  //  获取换拉头按钮
+		btmod.addEventListener('click', function() {
+			const headPath = "./assets/heads.glb"
+			const headId = 5
+			SHOWD.updateHeadStyle(headPath, headId)
+		})  //  监听换拉头按钮
+
+		const btfab = document.getElementById('color')  //  获取换拉头颜色按钮
+		btfab.addEventListener('click', function() {
+			const headColor = "#85ad92"
+
+			SHOWD.updateHeadColor(headColor)
+		})  //  监听换拉头颜色按钮
+
+	</script>
+</body>
+</html>

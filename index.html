@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="cn" class="no-js">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>3D服装展示系统</title>
+    <meta name="author" content="Seemsay.com by Evgeny" />
+	<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/fbj.css" />
+	<script src="js/jquery-3.5.1.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	
+	<script src="jsx/three.min.js" ></script>
+	<script src="jsx/GLTFLoader.js" ></script>
+	<script src="jsx/meshopt_decoder.module.js" ></script>
+	<script src="jsx/EffectComposer.js" ></script>
+	<script src="jsx/CopyShader.js" ></script>
+	<script src="jsx/RenderPass.js" ></script>
+	<script src="jsx/ShaderPass.js" ></script>
+	<script src="jsx/FXAAShader.js" ></script>
+	<script src="jsx/OutlinePass.js" ></script>
+	<script src="jsx/BloomPass.js" ></script>
+	<script src="jsx/OrbitControls.js" ></script>
+	<script src="jsx/DragControls.js" ></script>
+	<script src="jsx/TransformControls.js" ></script>
+	<script src="jsx/dat.gui.min.js" ></script>
+	<script src="jsx/stats.min.js" ></script>
+	<script src="jsx/3D.js"></script>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+
+    <div class="controls">
+        <div class="info">
+            <div class="info__message">
+                <p><strong>&nbsp;点击选中服装&nbsp;</strong> 以更换外形、面料、颜色。<strong>&nbsp;拖拽&nbsp;</strong> 以旋转服装。 <strong>&nbsp;滚动&nbsp;</strong> 以缩放服装。 <strong>&nbsp;点击辅料图片&nbsp;</strong> 以添加辅料。</p>
+            </div>
+        </div>
+		<div class="drop_menu">
+			<ul class="nav nav-tabs" id="fenleicaidan" role="tablist"></ul>
+			<div class="tab-content" id="tihuannr"></div>
+			
+		</div>
+    </div>
+	<div id='three-model-box'></div>
+    <div class="frame">
+		<h1 class="frame__title" id="productname"></h1>
+		<form class="exports">
+		<input type="button" id="light" value="灯光"></input>
+		<input type="button" id="savejm" value="保存"></input>
+		<input type="button" id="loadM" value="换款"></input>
+		<input type="button" id="fabricT" value="换面料"></input>
+		<input type="button" id="fabriccT" value="换面料颜色"></input>
+		<input type="button" id="accT" value="换普通辅料"></input>
+		<input type="button" id="partT" value="换部件"></input>
+		<input type="button" id="style" value="换拉头"></input>
+		<input type="button" id="color" value="换拉头颜色"></input>
+		<input type="button" id="labelS" value="选择标注"></input>
+		<input type="button" id="labelD" value="删标注"></input>
+
+		</form>
+	</div>
+	<script>
+		console.log(SHOWD)
+		const idCanvas = "c"
+		var qinfo = []
+		qinfo.model = "./assets/vmote.glb",
+		qinfo.partData = [{
+				partFile: "./materials/ll/maozi4.glb",
+				partId: 2,
+				partImg: "./materials/ll/mz.png",
+				partName: "maozi"
+			},
+			{
+				partFile: "./materials/ll/neiyi1.glb",
+				partId: 345,
+				partImg: "./materials/ll/ny.png",
+				partName: "neiyi"
+			},
+			{
+				partFile: "./materials/ll/waiyi.glb",
+				partId: 8,
+				partImg: "./materials/ll/wy.png",
+				partName: "waiyi"
+			}]
+		qinfo.fabricData= null,
+		qinfo.accessoriesData = [{
+			accClassify: null,
+			accFile: "./materials/ll/qiyan4.glb",
+			accImg: "./materials/ll/qiyan.png",
+			accNum: "",
+			accScale: "",
+			partId: 2,
+			isZipper: false,
+			headId: '',
+			headColor: '',
+			specification: "",
+			accMaterial: null,
+			perPrice: null
+		},
+		{
+			accClassify: 768,
+			accFile: "./materials/ll/lalian.glb",
+			accImg: "./materials/ll/lalian.png",
+			accNum: "HBU-0tq32154",
+			accScale: "1",
+			partId: 8,
+			isZipper: true,
+			headId: '',
+			headColor: '',
+			specification: "5#",
+			accMaterial: null,
+			perPrice: null
+		},
+		{
+			accClassify: 768,
+			accFile: "./materials/ll/head.glb",
+			accImg: "./materials/ll/latou.png",
+			accNum: "HBU-0tq32154",
+			accScale: "1",
+			partId: 8,
+			isZipper: true,
+			headId: 2,
+			headColor: "#a93534",
+			specification: "5#",
+			accMaterial: null,
+			perPrice: 2.7
+		}]
+		var second = []
+		second.Part = [{
+				partFile: "./materials/ll/maozi4.glb",
+				partId: 2,
+				partName: "maozi"
+			},
+			{
+				partFile: "./materials/ll/neiyi1.glb",
+				partId: 345,
+				partName: "neiyi"
+			},
+			{
+				partFile: "./materials/ll/waiyi.glb",
+				partId: 8,
+				partName: "waiyi"
+			}]
+		second.Fabric= [
+		{
+				fabricNum: "DKKRFJ-3443-DFKM",
+				fabricImg: "./materials/126276.jpg",
+				normalImg: "./materials/6276.jpg",
+				inName: "sz1li_7",
+				shininess: 5,
+				repeatx: 5,
+				repeaty: 5,
+				partId: 345,
+				fabricColor: "#000000",
+				fabricName: "水洗皮",
+				ingredientName: "PU：80%",
+				gramWeight: "12",
+				perPrice: 78
+			},
+			{
+				fabricNum: "DKwnyqFJ-3443-DFKM",
+				fabricImg: "./materials/91971.jpg",
+				normalImg: "./materials/776.jpg",
+				inName: "sz1mian_12",
+				shininess: 5,
+				repeatx: 5,
+				repeaty: 5,
+				partId: 8,
+				fabricColor: "#ED2A1A",
+				fabricName: "双面罗马布",
+				ingredientName: "棉：11%",
+				gramWeight: "11",
+				perPrice: 11
+			},
+			{
+				fabricNum: "DK5EUJ-3443-DFKM",
+				fabricImg: "./materials/126276.jpg",
+				normalImg: "./materials/6276.jpg",
+				inName: "sz1mian_10",
+				shininess: 5,
+				repeatx: 5,
+				repeaty: 5,
+				partId: 8,
+				fabricColor: "#000000",
+				fabricName: "水洗皮",
+				ingredientName: "PU：80%",
+				gramWeight: "12",
+				perPrice: 78
+			}],
+		second.Accessories = [{
+			accClassify: 2,
+			accFile: "./materials/ll/qiyan4.glb",
+			accPostion: [x = 0.3379020094871521, y = -0.4026950001716614, z = -0.0038270000368356705],
+			accRotation: {_order: "XYZ",
+			_x: 3.123882857636752, _y: 0.9035483433620997, _z: -2.3025777016761806},
+			accImg: "./materials/ll/qiyan.png",
+			accNum: "HBU-012356254",
+			accScale: "0.116",
+			partId: 2,
+			isZipper: false,
+			headId: null,
+			headColor: null,
+			specification: "51",
+			accMaterial: null,
+			perPrice: 1.5
+		},
+		{
+			accClassify: 2,
+			accFile: "./materials/ll/qiyan4.glb",
+			accPostion: [x = 0.3379020094871521, y = -0.4026950001716614, z = -0.0038270000368356705],
+			accRotation: {_order: "XYZ",
+			_x: 2.5812092526793067, _y: -0.043253594802874246, _z: -2.1790896087290625},
+			accImg: "./materials/ll/qiyan.png",
+			accNum: "HBU-012356254",
+			accScale: "0.116",
+			partId: 2,
+			isZipper: false,
+			headId: null,
+			headColor: null,
+			specification: "51",
+			accMaterial: null,
+			perPrice: 1.5
+		},
+		{
+			accClassify: 2,
+			accFile: "./materials/ll/qiyan4.glb",
+			accPostion: [x = 0.3379020094871521, y = -0.4026950001716614, z = -0.0038270000368356705],
+			accRotation: {_order: "XYZ",
+			_x: 2.534322654294939, _y: -0.18622019441736426, _z: -2.1588797083873112},
+			accImg: "./materials/ll/qiyan.png",
+			accNum: "HBU-012356254",
+			accScale: "0.116",
+			partId: 2,
+			isZipper: false,
+			headId: null,
+			headColor: null,
+			specification: "51",
+			accMaterial: null,
+			perPrice: 1.5
+		},
+		{
+			accClassify: 2,
+			accFile: "./materials/ll/qiyan4.glb",
+			accPostion: [x = 0.3379020094871521, y = -0.4026950001716614, z = -0.0038270000368356705],
+			accRotation: {_order: "XYZ",
+			_x: 1.5707964611537577, _y: 0, _z: 0},
+			accImg: "./materials/ll/qiyan.png",
+			accNum: "HBU-012356254",
+			accScale: "0.116",
+			partId: 2,
+			isZipper: false,
+			headId: null,
+			headColor: null,
+			specification: "51",
+			accMaterial: null,
+			perPrice: 1.5
+		},
+		{
+			accClassify: 768,
+			accFile: "./materials/ll/lalian.glb",
+			accPostion: [x = -0.09337300062179565, y = 0.18840700387954712, z = -14.992636680603027],
+			accRotation: {_order: "XYZ",
+			_x: 1.5707964611537577, _y: 0, _z: 0},
+			accImg: "./materials/ll/lalian.png",
+			accNum: "HBU-0tq32154",
+			accScale: "1",
+			partId: 8,
+			isZipper: true,
+			headId: null,
+			headColor: null,
+			specification: "51",
+			accMaterial: null,
+			perPrice: 2.5
+		},
+		{
+			accClassify: 768,
+			accFile: "./materials/ll/head.glb",
+			accPostion: [x = -0.05679300054907799, y = 0.2060070037841797, z = -14.99035930633545],
+			accRotation: {_order: "XYZ",
+			_x: 1.5707964611537577, _y: 0, _z: 0},
+			accImg: "./materials/ll/latou.png",
+			accNum: "HBU-0tq32154",
+			accScale: "1",
+			partId: 8,
+			isZipper: true,
+			headId: 567,
+			headColor: "#EA2626",
+			specification: "51",
+			accMaterial: null,
+			perPrice: 2.7
+		}]
+		
+			SHOWD.init3dComponent()(idCanvas, qinfo.model, qinfo.partData, qinfo.fabricData, qinfo.accessoriesData)
+		
+			const menuData = 'materials/partInfo1.json'
+			const mdata = getMaterialsData(menuData)
+			menu(mdata);  //  初始化面板
+		
+		function getMaterialsData(url) {  //  获取数据并解析
+			let dataUrl = url
+			let ininfo = new XMLHttpRequest()
+			ininfo.open("get", dataUrl, false);
+			ininfo.send(null)
+			let partData = []
+			let fabricData = []
+			let accessoriesData = []
+			if (ininfo.status == 200) {
+				let lsinfo = JSON.parse(ininfo.responseText)
+				let qqinfo
+				
+				const modelFile = lsinfo.data.humanModel
+				for(let i = 0; i < lsinfo.data.parts.length; i++ ) {
+					let lsPart = []
+					
+					lsPart.partId = lsinfo.data.parts[i].id
+					lsPart.partName = lsinfo.data.parts[i].name
+					lsPart.partFile = lsinfo.data.parts[i].file
+					lsPart.partImg = lsinfo.data.parts[i].img
+					
+					partData.push(lsPart)
+					for( let ii = 0; ii < lsinfo.data.parts[i].fabric.length; ii++ ) { // 面料全部信息
+						let lsFabric = []
+						lsFabric.partId = lsinfo.data.parts[i].id
+						lsFabric.isFabric = lsinfo.data.parts[i].fabric[ii].fabric
+						if(lsinfo.data.parts[i].fabric[ii].seemsayMaterialColor) {
+							if(lsinfo.data.parts[i].fabric[ii].seemsayMaterialColor.img) {
+								lsFabric.fabricImg = lsinfo.data.parts[i].fabric[ii].seemsayMaterialColor.img
+								lsFabric.fabricColor = lsinfo.data.parts[i].fabric[ii].seemsayMaterialColor.code
+							} else {
+								lsFabric.fabricImg = lsinfo.data.parts[i].fabric[ii].seemsayMaterial.imagePath
+								lsFabric.fabricColor = lsinfo.data.parts[i].fabric[ii].seemsayMaterialColor.code
+							}
+						} else {
+							lsFabric.fabricImg = lsinfo.data.parts[i].fabric[ii].seemsayMaterial.imagePath
+							lsFabric.fabricColor = ''
+						}
+						lsFabric.fabricNum = lsinfo.data.parts[i].fabric[ii].seemsayMaterial.fabrcNum
+						lsFabric.normalImg = lsinfo.data.parts[i].fabric[ii].seemsayMaterial.normalGraph
+						lsFabric.shininess = lsinfo.data.parts[i].fabric[ii].seemsayMaterial.shininess
+						lsFabric.repeatx = lsinfo.data.parts[i].fabric[ii].seemsayMaterial.repeat_x
+						lsFabric.repeaty = lsinfo.data.parts[i].fabric[ii].seemsayMaterial.repeat_y
+						
+						fabricData.push(lsFabric)
+					}
+					if (lsinfo.data.parts[i].accessories) {
+					for( let iii = 0; iii < lsinfo.data.parts[i].accessories.length; iii++ ) { // 辅料全部信息
+						let lsAcc = []
+						lsAcc.isFabric = lsinfo.data.parts[i].accessories[iii].fabric
+						lsAcc.accClassify = lsinfo.data.parts[i].accessories[iii].seemsayMaterial.classifyId
+						lsAcc.accNum = lsinfo.data.parts[i].accessories[iii].seemsayMaterial.fabrcNum
+						lsAcc.accScale = lsinfo.data.parts[i].accessories[iii].zoom
+						lsAcc.accFile = lsinfo.data.parts[i].accessories[iii].seemsayMaterial.filePath
+						lsAcc.accImg = lsinfo.data.parts[i].accessories[iii].seemsayMaterial.imagePath
+						lsAcc.zipPart = lsinfo.data.parts[i].accessories[iii].seemsayMaterial.parts
+						
+						if (lsinfo.data.parts[i].accessories[iii].styles) {
+							lsAcc.headId = lsinfo.data.parts[i].accessories[iii].styles.id
+							lsAcc.headPath = lsinfo.data.parts[i].accessories[iii].styles.threeD
+						} else {
+							lsAcc.headId = ''
+							lsAcc.headPath = ''
+						}
+						if (lsinfo.data.parts[i].accessories[iii].headColor) {
+							lsAcc.headColor = lsinfo.data.parts[i].accessories[iii].headColor.colorCode
+						} else {
+							lsAcc.headColor = ''
+						}
+						lsAcc.styles = lsinfo.data.parts[i].accessories[iii].styles
+						lsAcc.head = lsinfo.data.parts[i].accessories[iii].headColor
+						lsAcc.tooth = lsinfo.data.parts[i].accessories[iii].toothColor
+						lsAcc.tape = lsinfo.data.parts[i].accessories[iii].bandColor
+						
+						accessoriesData.push(lsAcc)
+					}
+				}
+				}
+				console.log(partData, fabricData, accessoriesData)
+				return {modelFile, partData, fabricData, accessoriesData}
+			}
+		}
+		
+		function menu(info) {  //  加载面板
+			if (info) {
+				let TOPUL = document.getElementById('fenleicaidan')
+				let feilei
+				if (info.fabricData) {
+					feilei = '面料'
+					ermenu(TOPUL, feilei)
+				}
+				if (info.accessoriesData) {
+					feilei = '辅料'
+					ermenu(TOPUL, feilei)
+				}
+				if (info.partData) {
+					feilei = '部件'
+					ermenu(TOPUL, feilei)
+				}
+
+				let TOPDIV = document.getElementById('tihuannr')
+				if (info.fabricData) {
+					let scediv = document.createElement('div')
+					scediv.classList.add('tab-pane', 'container', 'tray__slide')
+					scediv.setAttribute('id', '面料')
+					TOPDIV.append(scediv)
+
+					for (let fab = 0; fab < info.fabricData.length; fab++) {
+						let imgPath = info.fabricData[fab].fabricImg
+						let isFabric = '面料'
+						let fabnum = info.fabricData[fab].fabricNum
+						let colorf = info.fabricData[fab].fabricColor
+						// let path = info.fabricData[fab].filePath
+						let shininess = info.fabricData[fab].shininess
+						let repeatx = info.fabricData[fab].repeatx
+						let repeaty = info.fabricData[fab].repeaty
+						let normal = info.fabricData[fab].normalImg
+						let ingredientName = info.fabricData[fab].ingredientName
+						let gramWeight = info.fabricData[fab].gramWeight
+						let perPrice = info.fabricData[fab].perPrice
+						// let nickname = info.fabricData[fab].nameCN
+						// let status = info.fabricData[fab].defaultStatus
+						traynr(scediv, imgPath, isFabric, fabnum, colorf, shininess, repeatx, repeaty, normal, ingredientName, gramWeight, perPrice, info)
+					}
+				}
+				if (info.accessoriesData) {
+					let scediv = document.createElement('div')
+					scediv.classList.add('tab-pane', 'container', 'tray__slide')
+					scediv.setAttribute('id', '辅料')
+					TOPDIV.append(scediv)
+
+					for (let fl = 0; fl < info.accessoriesData.length; fl++) {
+						let imgPath = info.accessoriesData[fl].accImg
+						let isFabric = '辅料'
+						let accnum = info.accessoriesData[fl].accNum
+						let classify = info.accessoriesData[fl].accClassify
+						let accScale = info.accessoriesData[fl].accScale
+						let zipPart = info.accessoriesData[fl].zipPart
+						let path = info.accessoriesData[fl].accFile
+						let styles = info.accessoriesData[fl].styles
+						let head = info.accessoriesData[fl].head
+						let tooth = info.accessoriesData[fl].tooth
+						let tape = info.accessoriesData[fl].tape
+						let headPath = info.accessoriesData[fl].headPath
+						let headId = info.accessoriesData[fl].headId
+						let headColor = info.accessoriesData[fl].headColor
+						let specification = info.accessoriesData[fl].specification
+						let accMaterial = info.accessoriesData[fl].accMaterial
+						let perPrice = info.accessoriesData[fl].perPrice
+						
+						trayflnr(scediv, imgPath, isFabric, classify, accnum, path, accScale, zipPart, headPath, headId, headColor, specification, accMaterial, perPrice)
+					}
+				}
+				if (info.partData) {
+					let scediv = document.createElement('div')
+					scediv.classList.add('tab-pane', 'container', 'tray__slide')
+					scediv.setAttribute('id', '部件')
+					TOPDIV.append(scediv)
+
+					for (let bj = 0; bj < info.partData.length; bj++) {
+						let imgPath = info.partData[bj].partImg
+						let isFabric = '部件'
+						let partnum = info.partData[bj].partId
+						let partName = info.partData[bj].partName
+						let path = info.partData[bj].partFile
+						trayptnr(scediv, imgPath, isFabric, partnum, partName, path, info)
+					}
+				}
+			}
+		}
+		function ermenu(TOPUL, inner) {  //  加载面板部分菜单
+			let topli = document.createElement('li')
+			topli.classList.add('nav-item')
+			TOPUL.append(topli)
+			let topa = document.createElement('a')
+			topa.classList.add('nav-link')
+			topa.setAttribute('data-toggle', 'tab')
+			topa.setAttribute('href', '#' + inner);
+			topa.innerHTML = inner;
+			topli.append(topa)
+		}
+		function traynr(scediv, imgpath, isFabric, idnum, color, shininess, repeatx, repeaty, normal, ingredientName, gramWeight, perPrice, info) {  //  生成图片列表
+					
+			let trayimg = document.createElement('img')
+			trayimg.classList.add('tray__swatch')
+			trayimg.setAttribute('src', imgpath)
+			trayimg.setAttribute('isFabric', isFabric)
+			trayimg.setAttribute('idnum', idnum)
+			trayimg.setAttribute('color', color)
+			trayimg.setAttribute('shininess', shininess)
+			trayimg.setAttribute('repeatx', repeatx)
+			trayimg.setAttribute('repeaty', repeaty)
+			trayimg.setAttribute('normal', normal)
+			trayimg.setAttribute('ingredientName', ingredientName)
+			trayimg.setAttribute('gramWeight', gramWeight)
+			trayimg.setAttribute('perPrice', perPrice)
+			scediv.append(trayimg)
+
+			bindSwatchEvent()
+		}
+		function trayflnr(scediv, imgpath, isFabric, classify, idnum, path, accScale, part, headPath, headId, headColor, specification, accMaterial, perPrice) {  //  生成图片列表
+					
+			let trayimg = document.createElement('img')
+			trayimg.classList.add('tray__swatch')
+			trayimg.setAttribute('filepath', path)
+			trayimg.setAttribute('src', imgpath)
+			trayimg.setAttribute('isfabric', isFabric)
+			trayimg.setAttribute('idnum', idnum)
+			trayimg.setAttribute('accscale', accScale)
+			trayimg.setAttribute('classify', classify)
+			trayimg.setAttribute('zippart', part)
+			if (headPath) {
+				trayimg.setAttribute('headPath', headPath)
+				trayimg.setAttribute('headId', headId)
+			}
+			if (headColor) {
+				trayimg.setAttribute('headColor', headColor)
+			}
+			
+			
+			trayimg.setAttribute('specification', specification)
+			trayimg.setAttribute('accMaterial', accMaterial)
+			trayimg.setAttribute('perPrice', perPrice)
+			
+			scediv.append(trayimg)
+		
+			bindSwatchEvent()
+		}
+		function trayptnr(scediv, imgpath, isFabric, idnum, partName, path, info) {  //  生成图片列表
+					
+			let trayimg = document.createElement('img')
+			trayimg.classList.add('tray__swatch')
+			trayimg.setAttribute('src', imgpath)
+			trayimg.setAttribute('isFabric', isFabric)
+			trayimg.setAttribute('idnum', idnum)
+			trayimg.setAttribute('partName', partName)
+			trayimg.setAttribute('filePath', path)
+			scediv.append(trayimg)
+		
+			bindSwatchEvent()
+		}
+		function bindSwatchEvent(){   //  给图片添加监听
+			const selectnr = document.querySelectorAll(".tray__swatch")
+			Array.prototype.forEach.call(selectnr, function (element) {
+				element.addEventListener('click', selectswatch)
+			})
+		}
+		
+		function selectswatch(e) {  //  调用各功能模块
+		const att = e.target.attributes
+			if(att.isFabric.value == '面料') {
+				SHOWD.updateFabric(att.src.value, att.normal.value, att.shininess.value, att.repeatx.value, att.repeaty.value, att.idnum.value, att.color.value, att.ingredientName.value, att.gramWeight.value, att.perPrice.value)
+			} else if(att.isFabric.value == '辅料') {
+				console.log(att.zippart)
+				// const isfab = false
+				if (att.headPath) {
+					SHOWD.updateAccessories(att.filepath.value, att.idnum.value, att.accscale.value, att.classify.value, att.zippart.value, '','', att.specification.value, att.accMaterial.value, att.perPrice.value)
+					SHOWD.updateAccessories(att.headPath.value, att.idnum.value, att.accscale.value, att.classify.value, att.zippart.value, att.headId.value, att.headColor.value, att.specification.value, att.accMaterial.value, att.perPrice.value)
+				} else {
+					SHOWD.updateAccessories(att.filepath.value, att.idnum.value, att.accscale.value, att.classify.value, att.zippart.value, '','', att.specification.value, att.accMaterial.value, att.perPrice.value)
+				}
+			} else if(att.isFabric.value == '部件') {
+				SHOWD.updateComponent(att.filepath.value, att.idnum.value, att.partname.value)
+			}
+		}
+	
+		const btlight = document.getElementById('light')  //  增加灯光按钮，功能未完善
+		btlight.addEventListener('click', SHOWD.addLight)  //  监听增加灯光按钮
+		
+		const btsave = document.getElementById('savejm')  //  获取保存按钮
+		btsave.addEventListener('click', SHOWD.getChangedData)  //  监听保存按钮
+
+		const btmod = document.getElementById('loadM')  //  获取换款按钮
+		btmod.addEventListener('click', function() {
+			SHOWD.loadComponentData(second.Part, second.Fabric, second.Accessories)
+		})  //  监听换款按钮
+
+		const btfab = document.getElementById('fabricT')  //  获取换面料按钮
+		btfab.addEventListener('click', function() {
+			const name = 'sz2youdougq' // 右兜盖
+			let src = "https:\/\/qiniu.xiangjian.life\/1611054008593128743.jpg"
+			let src0 = "img/1234.jpg"
+			let shininess = 20
+			let repeat_x = 1
+			let repeat_y = 1
+			let idnum = "gaoghowe"
+			const ingredientName = '棉：100%'
+			const gramWeight = '3'
+			const perPrice = 3.8
+
+			SHOWD.updateFabric(src, src0, shininess, repeat_x, repeat_y, idnum, "", ingredientName, gramWeight, perPrice)
+		})  //  监听换面料按钮
+		
+		const btfabc = document.getElementById('fabriccT')  //  获取换面料颜色按钮
+		btfabc.addEventListener('click', function() {
+			const name = 'sz2youdougq' // 右兜盖
+			let src = "https://qiniu.xiangjian.life/1610182124832121811.jpg"
+			let src0 = "img/1234.jpg"
+			let shininess = 20
+			let repeat_x = 1
+			let repeat_y = 1
+			let idnum = "gaoghowe"
+			const fabcolor = '#fd77ff'
+			const ingredientName = '棉：100%'
+			const gramWeight = '3'
+			const perPrice = 3.8
+		
+			SHOWD.updateFabric(src, src0, shininess, repeat_x, repeat_y, idnum, fabcolor, ingredientName, gramWeight, perPrice)
+		})  //  监听换面料颜色按钮
+
+		const btacc = document.getElementById('accT')  //  获取换辅料按钮
+		btacc.addEventListener('click', function() {
+			const filepath = "materials/fl/zzz.glb"
+			const scale = 0.1
+			const isfab = false
+			const idnum = "wosmvoowq"
+			const classify = 3224
+			const isZipper = false
+			const headId = ''
+			const headColor = ''
+			const specification = '直径：0.8cm, 高：12cm'
+			const accMaterial = '金属'
+			const perPrice = 1.8
+			SHOWD.updateAccessories(filepath, idnum, scale, classify, isZipper, headId, headColor, specification, accMaterial, perPrice)
+		})  //  监听换辅料按钮
+
+		const btpart = document.getElementById('partT')  //  获取换部件按钮
+		btpart.addEventListener('click', function() {
+			let filepath = "./materials/ll/maozi4.glb"
+			let id = 2 // 前身右上
+			let name = "maozi"
+			SHOWD.updateComponent(filepath, id, name)
+		})  //  监听换部件按钮
+		
+		const btziph = document.getElementById('style')  //  获取换拉头按钮
+		btziph.addEventListener('click', function() {
+			const headPath = "./assets/heads.glb"
+			const idnum = 'iwerosdfj'
+			const scale = 1
+			const classify = 36
+			const isZipper = true
+			const headId = 5
+			const headcolor = ''
+			const specification = '5#'
+			const accMaterial = '金属'
+			const perPrice = 3.1
+			SHOWD.updateAccessories(headPath, idnum, scale, classify, isZipper, headId, headcolor, specification, accMaterial, perPrice)
+		})  //  监听换拉头按钮
+		
+		const btziphc = document.getElementById('color')  //  获取换拉头颜色按钮
+		btziphc.addEventListener('click', function() {
+			const headPath = "./assets/heads.glb"
+			const idnum = 'lsfowf'
+			const scale = 1
+			const classify = 36
+			const isZipper = true
+			const headId = 5
+			const headcolor = '#24ffe2'
+			const specification = '5#'
+			const accMaterial = '金属'
+			const perPrice = 3.1
+		
+			SHOWD.updateAccessories(headPath, idnum, scale, classify, isZipper, headId, headcolor, specification, accMaterial, perPrice)
+		})  //  监听换拉头颜色按钮
+
+		const btslabel = document.getElementById('labelS')  //  获取删标注按钮
+		btslabel.addEventListener('click', function() {
+			let id = "sz1mian_12" // 外衣左袖
+			SHOWD.seleteLabel(id)
+			console.log(SHOWD.labelCallback(id))
+		})  //  监听删标注按钮
+		
+		const btdlabel = document.getElementById('labelD')  //  获取删标注按钮
+		btdlabel.addEventListener('click', function() {
+			let id = "sz1mian_12" // 外衣左袖
+			SHOWD.deleteLabel(id)
+		})  //  监听删标注按钮
+	</script>
+</body>
+</html>
